@@ -1,0 +1,12 @@
+Treeguessr
+
+word like game with tree species
+
+- use this dataset for us trees?: https://www.kaggle.com/datasets/donnetew/common-tree-species-us-forests
+- have the color fill up from the bottom if the correct letter is guessed
+
+- users can guess a letter (like wheel of fortune) or guess the word
+- total score will be calculated by some formula based on number of individual letters
+guessed, what letters were guessed, and difficulty of the tree name
+
+- will show stats like avg score distributions, leaderboard?, etc
