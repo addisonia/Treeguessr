@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import './game.css'; // <-- 1. IMPORT YOUR NEW CSS FILE
 
 // --- Scoring Constants ---
 const POINTS_PER_CORRECT_LETTER = 10;
@@ -16,7 +17,7 @@ const pickRandomWord = (words) => {
 const calculateWordDifficulty = (word) => {
   let difficulty = 1;
   if (word.length > 10) difficulty += 1;
-  if (!word.includes(' ')) difficulty += 1; // Single word is harder
+  if (!word.includes(' ')) difficulty += 1; 
   
   const uniqueLetters = new Set(word.replace(' ', ''));
   let uncommonLetters = 0;
@@ -25,7 +26,6 @@ const calculateWordDifficulty = (word) => {
       uncommonLetters++;
     }
   });
-  // Avoid division by zero if word is just spaces (though wordlist shouldn't have this)
   if (uniqueLetters.size > 0 && (uncommonLetters / uniqueLetters.size > 0.5)) {
     difficulty += 1;
   }
@@ -37,36 +37,32 @@ const calculateWordDifficulty = (word) => {
 
 /**
  * 1. LetterDisplay Component
- * Renders the individual letter boxes for the word to guess.
  */
 const LetterDisplay = ({ word, guessedLetters }) => {
   const letters = useMemo(() => word.split(''), [word]);
 
   return (
-    <div className="flex flex-wrap justify-center gap-2 p-4">
+    <div className="letter-display">
       {letters.map((letter, index) => {
         if (letter === ' ') {
-          return <div key={index} className="w-8 h-10 md:w-12 md:h-14" />;
+          return <div key={index} className="letter-space" />;
         }
         
         const isGuessed = guessedLetters.has(letter);
         
         return (
-          <div 
-            key={index} 
-            className="relative flex items-center justify-center w-8 h-10 text-2xl font-bold uppercase transition-all duration-300 bg-gray-200 border-2 border-gray-400 rounded-md md:w-12 md:h-14 md:text-4xl"
-          >
+          <div key={index} className="letter-box">
             {/* The fill-up animation div */}
             <div 
-              className="absolute bottom-0 left-0 right-0 bg-green-500 transition-all duration-500 ease-out"
+              className="letter-fill"
               style={{ height: isGuessed ? '100%' : '0%' }}
             />
             {/* The letter, visible only when guessed */}
-            <span className={`relative transition-opacity duration-300 ${isGuessed ? 'opacity-100 text-white' : 'opacity-0'}`}>
+            <span className={`letter-text ${isGuessed ? 'is-guessed' : ''}`}>
               {letter}
             </span>
-            {/* The hidden letter for layout calculation (optional but good) */}
-            <span className="absolute text-transparent">
+            {/* The hidden letter for layout calculation */}
+            <span className="letter-hidden">
               {letter}
             </span>
           </div>
@@ -78,13 +74,12 @@ const LetterDisplay = ({ word, guessedLetters }) => {
 
 /**
  * 2. Keyboard Component
- * Renders the A-Z keyboard for guessing letters.
  */
 const Keyboard = ({ onGuess, guessedLetters }) => {
   const keys = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
   return (
-    <div className="flex flex-wrap justify-center gap-2 p-2 md:p-4">
+    <div className="keyboard">
       {keys.map(key => {
         const isGuessed = guessedLetters.has(key);
         return (
@@ -92,14 +87,7 @@ const Keyboard = ({ onGuess, guessedLetters }) => {
             key={key}
             onClick={() => onGuess(key)}
             disabled={isGuessed}
-            className={`
-              w-9 h-11 md:w-12 md:h-14 text-lg md:text-xl font-semibold rounded-md 
-              transition-all duration-200
-              ${isGuessed 
-                ? 'bg-gray-400 text-gray-600' 
-                : 'bg-blue-500 text-white hover:bg-blue-600 active:transform active:scale-95'
-              }
-            `}
+            className="key"
           >
             {key}
           </button>
@@ -111,7 +99,6 @@ const Keyboard = ({ onGuess, guessedLetters }) => {
 
 /**
  * 3. GuessWordInput Component
- * Renders the input field for guessing the whole word.
  */
 const GuessWordInput = ({ onGuessWord }) => {
   const [guess, setGuess] = useState('');
@@ -125,17 +112,17 @@ const GuessWordInput = ({ onGuessWord }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full gap-2 p-4">
+    <form onSubmit={handleSubmit} className="guess-form">
       <input
         type="text"
         value={guess}
         onChange={(e) => setGuess(e.target.value)}
         placeholder="Guess the tree!"
-        className="flex-grow p-3 text-lg border-2 border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+        className="guess-input"
       />
       <button 
         type="submit"
-        className="px-6 py-3 font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 active:transform active:scale-95"
+        className="guess-button"
       >
         Guess
       </button>
@@ -143,11 +130,8 @@ const GuessWordInput = ({ onGuessWord }) => {
   );
 };
 
-// --- Removed StatsModal Component ---
-
 /**
  * 5. Main App Component
- * Manages all game logic and state.
  */
 export default function App() {
   const [wordList, setWordList] = useState([]);
@@ -157,17 +141,10 @@ export default function App() {
   const [score, setScore] = useState(0);
   const [difficulty, setDifficulty] = useState(1);
   const [inputMode, setInputMode] = useState('letter'); // 'letter' or 'word'
-  
-  // --- Removed Firebase & Stats State ---
-  
   const [gameState, setGameState] = useState('playing'); // 'playing', 'won', 'lost'
   const [message, setMessage] = useState(''); // For win/lose/error messages
 
   const MAX_WRONG_GUESSES = 6;
-
-  // --- Data Loading Effects ---
-
-  // --- Removed Firebase Auth Effect ---
 
   // Effect 1: Load Word List
   useEffect(() => {
@@ -183,16 +160,12 @@ export default function App() {
       });
   }, []);
   
-  // --- Removed Stats & Leaderboard Load Effect ---
-
   // Effect 2: Start Game (when wordlist is ready)
   useEffect(() => {
     if (wordList.length > 0) {
       startNewGame();
     }
-  }, [wordList]); // Only depends on wordList now
-
-  // --- Game Logic Functions ---
+  }, [wordList]); 
 
   const startNewGame = useCallback(() => {
     const newWord = pickRandomWord(wordList);
@@ -221,18 +194,14 @@ export default function App() {
       const finalScore = score + (POINTS_PER_WORD_GUESS * difficulty);
       setScore(finalScore);
       setMessage(`You got it! It was ${currentWord}. Final Score: ${finalScore}`);
-      // Removed call to updateUserStats()
     }
     
     // Check for Loss
     else if (wrongGuesses >= MAX_WRONG_GUESSES) {
       setGameState('lost');
       setMessage(`Game over! The tree was: ${currentWord}`);
-      // Removed call to updateUserStats()
     }
   }, [guessedLetters, wrongGuesses, gameState, currentWord]);
-
-  // --- Removed Database Update Function ---
 
   // --- Event Handlers ---
 
@@ -244,13 +213,11 @@ export default function App() {
     setGuessedLetters(newGuessedLetters);
 
     if (currentWord.includes(letter)) {
-      // Correct guess
       let letterPoints = COMMON_LETTERS.has(letter) 
         ? POINTS_PER_CORRECT_LETTER 
         : POINTS_PER_CORRECT_LETTER * 2;
       setScore(score + letterPoints);
     } else {
-      // Wrong guess
       setWrongGuesses(wrongGuesses + 1);
       setScore(score + PENALTY_PER_WRONG_LETTER);
     }
@@ -265,48 +232,43 @@ export default function App() {
       setScore(finalScore);
       setGameState('won');
       setMessage(`You got it! It was ${currentWord}. Final Score: ${finalScore}`);
-      // Mark all letters as guessed for visual feedback
       setGuessedLetters(new Set([...guessedLetters, ...uniqueLettersInWord]));
-      // Removed call to updateUserStats()
     } else {
       // Lose!
       setScore(score + PENALTY_PER_WRONG_WORD);
       setGameState('lost');
       setMessage(`Sorry, that's not it! The tree was: ${currentWord}`);
-      // Removed call to updateUserStats()
     }
   };
 
   if (currentWord === "LOADING") {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <h1 className="text-4xl font-bold text-green-800 animate-pulse">Loading Treeguessr...</h1>
+      <div className="loading-screen">
+        <h1 className="loading-title">Loading Treeguessr...</h1>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen font-sans bg-gray-100">
+    <div className="game-app">
       {/* Header */}
-      <header className="flex items-center justify-between p-4 text-white bg-green-800 shadow-md">
-        {/* Removed Stats Button, added placeholder for spacing */}
-        <div className="w-8 h-8"></div>
-        <h1 className="text-3xl font-bold">
-          <span className="text-green-300">Tree</span>guessr
+      <header className="game-header">
+        <div className="header-spacer"></div>
+        <h1 className="header-title">
+          <span className="header-title-span">Tree</span>guessr
         </h1>
-        {/* Placeholder for settings icon */}
-        <div className="w-8 h-8"></div>
+        <div className="header-spacer"></div>
       </header>
 
       {/* Main Game Area */}
-      <main className="flex flex-col items-center flex-grow w-full max-w-2xl p-4 mx-auto">
+      <main className="game-main">
         {/* Game State Message */}
         {gameState !== 'playing' && (
-          <div className="flex flex-col items-center w-full p-4 mb-4 text-center text-white bg-blue-600 rounded-lg shadow-lg">
-            <h2 className="mb-2 text-2xl font-bold">{message}</h2>
+          <div className="game-message-box">
+            <h2 className="game-message-text">{message}</h2>
             <button
               onClick={startNewGame}
-              className="px-6 py-2 font-semibold text-blue-700 bg-white rounded-full hover:bg-gray-100"
+              className="play-again-button"
             >
               Play Again
             </button>
@@ -314,12 +276,12 @@ export default function App() {
         )}
         
         {/* Score & Difficulty */}
-        <div className="flex justify-between w-full mb-4">
-          <div className="p-3 text-lg font-semibold text-white bg-gray-700 rounded-lg">
-            Score: <span className="font-bold text-green-300">{score}</span>
+        <div className="score-bar">
+          <div className="score-box">
+            Score: <span className="score-box-score">{score}</span>
           </div>
-          <div className="p-3 text-lg font-semibold text-white bg-gray-700 rounded-lg">
-            Wrong Guesses: <span className="font-bold text-red-400">{wrongGuesses} / {MAX_WRONG_GUESSES}</span>
+          <div className="score-box">
+            Wrong Guesses: <span className="score-box-wrong">{wrongGuesses} / {MAX_WRONG_GUESSES}</span>
           </div>
         </div>
 
@@ -327,23 +289,23 @@ export default function App() {
         <LetterDisplay word={currentWord} guessedLetters={guessedLetters} />
 
         {/* Input Mode Tabs */}
-        <div className="flex w-full mt-4 border-b-2 border-gray-300">
+        <div className="input-tabs">
           <button
             onClick={() => setInputMode('letter')}
-            className={`flex-1 p-3 text-lg font-semibold text-center ${inputMode === 'letter' ? 'text-green-700 border-b-4 border-green-700' : 'text-gray-500'}`}
+            className={`input-tab ${inputMode === 'letter' ? 'active' : ''}`}
           >
             Guess A Letter
           </button>
           <button
             onClick={() => setInputMode('word')}
-            className={`flex-1 p-3 text-lg font-semibold text-center ${inputMode === 'word' ? 'text-green-700 border-b-4 border-green-700' : 'text-gray-500'}`}
+            className={`input-tab ${inputMode === 'word' ? 'active' : ''}`}
           >
             Guess The Tree!
           </button>
         </div>
 
         {/* Keyboard or Word Input */}
-        <div className="w-full mt-2">
+        <div className="input-area">
           {inputMode === 'letter' ? (
             <Keyboard onGuess={handleGuessLetter} guessedLetters={guessedLetters} />
           ) : (
@@ -351,9 +313,6 @@ export default function App() {
           )}
         </div>
       </main>
-
-      {/* --- Removed Stats Modal --- */}
     </div>
   );
 }
-
