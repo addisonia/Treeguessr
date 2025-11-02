@@ -126,34 +126,52 @@
   color: #f87171; /* text-red-400 */
 }
 
-/* --- Letter Display --- */
+/* --- Letter Display (Fix 2) --- */
 .letter-display {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 0.5rem; /* gap-2 */
+  gap: 0.75rem; /* Gap between words and spaces */
   padding: 1rem;
 }
 
+.word-container {
+  display: inline-flex; /* Keeps letters together */
+  gap: 0.25rem; /* Gap between letters */
+}
+
+/* --- Letter Box (Fix 4: Responsive) --- */
 .letter-box {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2rem; /* w-8 */
-  height: 2.5rem; /* h-10 */
-  font-size: 1.5rem; /* text-2xl */
   font-weight: 700;
   text-transform: uppercase;
   transition: all 300ms;
   background-color: #e5e7eb; /* bg-gray-200 */
   border: 2px solid #9ca3af; /* border-gray-400 */
   border-radius: 0.375rem; /* rounded-md */
+  
+  /* Fluid sizing for mobile */
+  width: 8vw;
+  height: 10vw;
+  font-size: 5vw;
+  line-height: 1;
+  min-width: 1.75rem;
+  min-height: 2.25rem;
+  max-width: 3.5rem;
+  max-height: 4.2rem;
 }
 
 .letter-space {
-  width: 2rem; /* w-8 */
-  height: 2.5rem; /* h-10 */
+  /* Fluid sizing for mobile */
+  width: 8vw;
+  height: 10vw;
+  min-width: 1.75rem;
+  min-height: 2.25rem;
+  max-width: 3.5rem;
+  max-height: 4.2rem;
 }
 
 .letter-fill {
@@ -170,6 +188,7 @@
   transition: opacity 300ms;
   opacity: 0;
   color: white;
+  font-size: inherit; /* Inherit fluid size */
 }
 .letter-text.is-guessed {
   opacity: 1;
@@ -178,6 +197,7 @@
 .letter-hidden {
   position: absolute;
   color: transparent;
+  font-size: inherit; /* Inherit fluid size */
 }
 
 /* --- Input Toggler --- */
@@ -219,10 +239,8 @@
   padding: 0.5rem;
 }
 
+/* --- Key (Fix 4: Responsive) --- */
 .key {
-  width: 2.25rem; /* w-9 */
-  height: 2.75rem; /* h-11 */
-  font-size: 1.125rem; /* text-lg */
   font-weight: 600;
   border-radius: 0.375rem; /* rounded-md */
   transition: all 200ms;
@@ -232,6 +250,16 @@
   /* Active state */
   background-color: #3b82f6; /* bg-blue-500 */
   color: white;
+
+  /* Fluid sizing for mobile */
+  width: 9vw;
+  height: 11vw;
+  font-size: 4.5vw;
+  line-height: 1;
+  min-width: 1.75rem;
+  min-height: 2.25rem;
+  max-width: 3rem;
+  max-height: 3.5rem;
 }
 .key:hover {
   background-color: #2563eb; /* hover:bg-blue-600 */
@@ -283,8 +311,9 @@
 }
 
 
-/* --- Responsive Media Queries --- */
-@media (min-width: 768px) { /* md: */
+/* --- Responsive Media Queries (Fix 4) --- */
+@media (min-width: 768px) {
+  /* On larger screens, switch back to fixed, larger sizes */
   .letter-box {
     width: 3rem; /* md:w-12 */
     height: 3.5rem; /* md:h-14 */

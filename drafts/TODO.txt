@@ -1,0 +1,9 @@
+- word rectangle ui is showing an extra letter at the end
+- word rectangle ui is splitting some of the words onto new lines (each word should be seen not split and if it doesnt fit then move it onto a new line)
+- fix scorign system/guessing system:
+    - score should start at 100
+    - score drops by 15 for each vowel, 5 for each constanant
+    - 5 shot to guess the tree (does not affect score, so in theory max score is 100 and min is 5)
+    - game ends in loss if 5 tree guesses are used and fail or if score reaches 0
+    - game ends in win if tree is guessed (either by guessing all the letters individually or guessing the tree)
+- ui is not good, needs to adjust to zoom/screen size

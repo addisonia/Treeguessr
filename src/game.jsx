@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import './game.css'; // <-- 1. IMPORT YOUR NEW CSS FILE
+import './game.css'; 
 
-// --- Scoring Constants ---
-const POINTS_PER_CORRECT_LETTER = 10;
-const POINTS_PER_WORD_GUESS = 100;
-const PENALTY_PER_WRONG_LETTER = -5;
-const PENALTY_PER_WRONG_WORD = -25;
-const COMMON_LETTERS = new Set(['E', 'T', 'A', 'O', 'I', 'N', 'S', 'H', 'R']);
+// --- Scoring Constants (Fix 3) ---
+const VOWELS = new Set(['A', 'E', 'I', 'O', 'U']);
+const COST_PER_VOWEL = 15;
+const COST_PER_CONSONANT = 5;
+const STARTING_SCORE = 100;
+const MIN_SCORE = 5;
+const STARTING_WORD_GUESSES = 5;
 
 // --- Helper Functions ---
 const pickRandomWord = (words) => {
@@ -14,10 +15,11 @@ const pickRandomWord = (words) => {
   return words[Math.floor(Math.random() * words.length)];
 };
 
+// (calculateWordDifficulty is no longer used for scoring, but we can keep it)
 const calculateWordDifficulty = (word) => {
   let difficulty = 1;
   if (word.length > 10) difficulty += 1;
-  if (!word.includes(' ')) difficulty += 1; 
+  if (!word.includes(' ')) difficulty += 1;
   
   const uniqueLetters = new Set(word.replace(' ', ''));
   let uncommonLetters = 0;
@@ -36,38 +38,41 @@ const calculateWordDifficulty = (word) => {
 // --- React Components ---
 
 /**
- * 1. LetterDisplay Component
+ * 1. LetterDisplay Component (Fix 2: Word wrapping)
  */
 const LetterDisplay = ({ word, guessedLetters }) => {
-  const letters = useMemo(() => word.split(''), [word]);
+  // Split by space to get words
+  const words = useMemo(() => word.split(' '), [word]);
 
   return (
     <div className="letter-display">
-      {letters.map((letter, index) => {
-        if (letter === ' ') {
-          return <div key={index} className="letter-space" />;
-        }
-        
-        const isGuessed = guessedLetters.has(letter);
-        
-        return (
-          <div key={index} className="letter-box">
-            {/* The fill-up animation div */}
-            <div 
-              className="letter-fill"
-              style={{ height: isGuessed ? '100%' : '0%' }}
-            />
-            {/* The letter, visible only when guessed */}
-            <span className={`letter-text ${isGuessed ? 'is-guessed' : ''}`}>
-              {letter}
-            </span>
-            {/* The hidden letter for layout calculation */}
-            <span className="letter-hidden">
-              {letter}
-            </span>
+      {words.map((wordString, wordIndex) => (
+        // Use a Fragment to group the word and the space after it
+        <React.Fragment key={wordIndex}>
+          {/* Container for letters in a single word */}
+          <div className="word-container">
+            {wordString.split('').map((letter, letterIndex) => {
+              const isGuessed = guessedLetters.has(letter);
+              return (
+                <div key={`${wordIndex}-${letterIndex}`} className="letter-box">
+                  <div 
+                    className="letter-fill"
+                    style={{ height: isGuessed ? '100%' : '0%' }}
+                  />
+                  <span className={`letter-text ${isGuessed ? 'is-guessed' : ''}`}>
+                    {letter}
+                  </span>
+                  <span className="letter-hidden">
+                    {letter}
+                  </span>
+                </div>
+              );
+            })}
           </div>
-        );
-      })}
+          {/* Add a space element if it's not the last word */}
+          {wordIndex < words.length - 1 && <div className="letter-space" />}
+        </React.Fragment>
+      ))}
     </div>
   );
 };
@@ -137,21 +142,25 @@ export default function App() {
   const [wordList, setWordList] = useState([]);
   const [currentWord, setCurrentWord] = useState("LOADING");
   const [guessedLetters, setGuessedLetters] = useState(new Set());
-  const [wrongGuesses, setWrongGuesses] = useState(0);
-  const [score, setScore] = useState(0);
-  const [difficulty, setDifficulty] = useState(1);
-  const [inputMode, setInputMode] = useState('letter'); // 'letter' or 'word'
-  const [gameState, setGameState] = useState('playing'); // 'playing', 'won', 'lost'
-  const [message, setMessage] = useState(''); // For win/lose/error messages
+  
+  // --- State for new Game Logic (Fix 3) ---
+  const [score, setScore] = useState(STARTING_SCORE);
+  const [wordGuessesLeft, setWordGuessesLeft] = useState(STARTING_WORD_GUESSES);
+  // --- Removed wrongGuesses state ---
 
-  const MAX_WRONG_GUESSES = 6;
+  const [inputMode, setInputMode] = useState('letter');
+  const [gameState, setGameState] = useState('playing');
+  const [message, setMessage] = useState('');
 
   // Effect 1: Load Word List
   useEffect(() => {
     fetch('wordlist.txt')
       .then(response => response.text())
       .then(text => {
-        const words = text.split('\n').filter(Boolean);
+        // (Fix 1: Clean up words)
+        const words = text.split('\n')
+                          .map(word => word.trim()) // Removes \r and other whitespace
+                          .filter(Boolean); // Removes empty strings
         setWordList(words);
       })
       .catch(error => {
@@ -167,19 +176,20 @@ export default function App() {
     }
   }, [wordList]); 
 
+  // --- Game Logic Functions (Fix 3) ---
+
   const startNewGame = useCallback(() => {
     const newWord = pickRandomWord(wordList);
     setCurrentWord(newWord);
-    setDifficulty(calculateWordDifficulty(newWord));
     setGuessedLetters(new Set());
-    setWrongGuesses(0);
-    setScore(0);
+    setScore(STARTING_SCORE); // Reset score to 100
+    setWordGuessesLeft(STARTING_WORD_GUESSES); // Reset word guesses
     setGameState('playing');
     setMessage('');
     setInputMode('letter');
   }, [wordList]);
 
-  // Check for Win/Loss condition
+  // Check for Win condition
   const uniqueLettersInWord = useMemo(() => {
     return new Set(currentWord.replace(/ /g, ''));
   }, [currentWord]);
@@ -187,23 +197,18 @@ export default function App() {
   useEffect(() => {
     if (gameState !== 'playing' || currentWord === "LOADING") return;
 
-    // Check for Win
+    // Check for Win by guessing all letters
     if (uniqueLettersInWord.size > 0 && 
         [...uniqueLettersInWord].every(letter => guessedLetters.has(letter))) {
       setGameState('won');
-      const finalScore = score + (POINTS_PER_WORD_GUESS * difficulty);
-      setScore(finalScore);
-      setMessage(`You got it! It was ${currentWord}. Final Score: ${finalScore}`);
+      setMessage(`You got it! It was ${currentWord}. Final Score: ${score}`);
     }
     
-    // Check for Loss
-    else if (wrongGuesses >= MAX_WRONG_GUESSES) {
-      setGameState('lost');
-      setMessage(`Game over! The tree was: ${currentWord}`);
-    }
-  }, [guessedLetters, wrongGuesses, gameState, currentWord]);
+    // Loss conditions are now handled *inside* the guess handlers
 
-  // --- Event Handlers ---
+  }, [guessedLetters, gameState, currentWord, uniqueLettersInWord, score]); // Added score to deps
+
+  // --- Event Handlers (Fix 3) ---
 
   const handleGuessLetter = (letter) => {
     if (gameState !== 'playing' || guessedLetters.has(letter)) return;
@@ -212,14 +217,17 @@ export default function App() {
     newGuessedLetters.add(letter);
     setGuessedLetters(newGuessedLetters);
 
-    if (currentWord.includes(letter)) {
-      let letterPoints = COMMON_LETTERS.has(letter) 
-        ? POINTS_PER_CORRECT_LETTER 
-        : POINTS_PER_CORRECT_LETTER * 2;
-      setScore(score + letterPoints);
+    // Calculate cost of the guess
+    const cost = VOWELS.has(letter) ? COST_PER_VOWEL : COST_PER_CONSONANT;
+    const newScore = score - cost;
+
+    // Check for game loss
+    if (newScore <= MIN_SCORE) {
+      setScore(MIN_SCORE); // Clamp score at min
+      setGameState('lost');
+      setMessage(`You ran out of points! The tree was: ${currentWord}`);
     } else {
-      setWrongGuesses(wrongGuesses + 1);
-      setScore(score + PENALTY_PER_WRONG_LETTER);
+      setScore(newScore);
     }
   };
 
@@ -228,18 +236,27 @@ export default function App() {
 
     if (wordGuess === currentWord) {
       // Win!
-      const finalScore = score + (POINTS_PER_WORD_GUESS * difficulty) + (POINTS_PER_CORRECT_LETTER * uniqueLettersInWord.size);
-      setScore(finalScore);
       setGameState('won');
-      setMessage(`You got it! It was ${currentWord}. Final Score: ${finalScore}`);
+      setMessage(`You got it! It was ${currentWord}. Final Score: ${score}`);
+      // Mark all letters as guessed for visual feedback
       setGuessedLetters(new Set([...guessedLetters, ...uniqueLettersInWord]));
     } else {
-      // Lose!
-      setScore(score + PENALTY_PER_WRONG_WORD);
-      setGameState('lost');
-      setMessage(`Sorry, that's not it! The tree was: ${currentWord}`);
+      // Wrong guess
+      const newGuessesLeft = wordGuessesLeft - 1;
+      setWordGuessesLeft(newGuessesLeft);
+
+      if (newGuessesLeft <= 0) {
+        // Lose!
+        setGameState('lost');
+        setMessage(`You're out of tree guesses! The tree was: ${currentWord}`);
+      } else {
+        // You still have guesses left, just notify the user
+        // (We can add a temporary message here later if we want)
+      }
     }
   };
+
+  // --- Render Logic ---
 
   if (currentWord === "LOADING") {
     return (
@@ -275,13 +292,13 @@ export default function App() {
           </div>
         )}
         
-        {/* Score & Difficulty */}
+        {/* Score & Difficulty (Fix 3) */}
         <div className="score-bar">
           <div className="score-box">
             Score: <span className="score-box-score">{score}</span>
           </div>
           <div className="score-box">
-            Wrong Guesses: <span className="score-box-wrong">{wrongGuesses} / {MAX_WRONG_GUESSES}</span>
+            Tree Guesses: <span className="score-box-wrong">{wordGuessesLeft} / {STARTING_WORD_GUESSES}</span>
           </div>
         </div>
 
@@ -292,12 +309,14 @@ export default function App() {
         <div className="input-tabs">
           <button
             onClick={() => setInputMode('letter')}
+            disabled={gameState !== 'playing'} // Disable buttons when game is over
             className={`input-tab ${inputMode === 'letter' ? 'active' : ''}`}
           >
             Guess A Letter
           </button>
           <button
             onClick={() => setInputMode('word')}
+            disabled={gameState !== 'playing'} // Disable buttons when game is over
             className={`input-tab ${inputMode === 'word' ? 'active' : ''}`}
           >
             Guess The Tree!
@@ -305,13 +324,16 @@ export default function App() {
         </div>
 
         {/* Keyboard or Word Input */}
-        <div className="input-area">
-          {inputMode === 'letter' ? (
-            <Keyboard onGuess={handleGuessLetter} guessedLetters={guessedLetters} />
-          ) : (
-            <GuessWordInput onGuessWord={handleGuessWord} />
-          )}
-        </div>
+        {/* (Fix 3: Disable input when game is over) */}
+        {gameState === 'playing' && (
+          <div className="input-area">
+            {inputMode === 'letter' ? (
+              <Keyboard onGuess={handleGuessLetter} guessedLetters={guessedLetters} />
+            ) : (
+              <GuessWordInput onGuessWord={handleGuessWord} />
+            )}
+          </div>
+        )}
       </main>
     </div>
   );
