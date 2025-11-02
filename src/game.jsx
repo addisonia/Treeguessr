@@ -6,7 +6,7 @@ const VOWELS = new Set(['A', 'E', 'I', 'O', 'U']);
 const COST_PER_VOWEL = 15;
 const COST_PER_CONSONANT = 5;
 const STARTING_SCORE = 100;
-const STARTING_WORD_GUESSES = 5;
+const STARTING_WORD_GUESSES = 3;
 
 // --- Helper Functions ---
 const pickRandomWord = (words) => {

@@ -1,2 +1,8 @@
-- change so that only available letters are shown as yellow on guess the tree (rest stay gray)
-- bug where some of the green letters are being shown filled in then wiped when you click play again 
+BUGS:
+- 
+
+
+TO ADD:
+- Daily Tree (default when opening site)
+- Infinite Mode
+- sign in with firebase to save stats 
