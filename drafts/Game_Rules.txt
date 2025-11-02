@@ -1,0 +1,6 @@
+Objective: Guess the Tree before running out of points or guesses
+- (-15) points per vowel guessed
+- (-5) points per constanent guessed
+- 5 tree guesses
+
+
