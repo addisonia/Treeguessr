@@ -2,6 +2,7 @@
   "name": "treeguessr.json",
   "private": true,
   "version": "0.0.0",
+  "homepage": "https://addisonia.github.io/Treeguessr/",
   "type": "module",
   "scripts": {
     "dev": "vite",
