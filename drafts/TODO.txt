@@ -1,0 +1,8 @@
+BUGS:
+- 
+
+
+TO ADD:
+- Daily Tree (default when opening site)
+- Infinite Mode
+- sign in with firebase to save stats 
